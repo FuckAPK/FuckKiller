@@ -8,8 +8,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
 
-    private final int MAX_CACHED_PROCESSES = Integer.MAX_VALUE / 16;
-    private final int MAX_PHANTOM_PROCESSES = Integer.MAX_VALUE / 16;
+    private final static int MAX_CACHED_PROCESSES = 1024;
+    private final static int MAX_PHANTOM_PROCESSES = 1024;
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
@@ -27,7 +27,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 XposedHelpers.setIntField(param.thisObject, "mCustomizedMaxCachedProcesses", MAX_CACHED_PROCESSES);
                 XposedHelpers.setIntField(param.thisObject, "MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES);
                 XposedHelpers.setIntField(param.thisObject, "CUR_MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES);
-                XposedHelpers.setIntField(param.thisObject, "CUR_MAX_EMPTY_PROCESSES", MAX_CACHED_PROCESSES / 2);
+                XposedHelpers.setIntField(param.thisObject, "CUR_MAX_EMPTY_PROCESSES", MAX_CACHED_PROCESSES/2);
 
                 XposedHelpers.setIntField(param.thisObject, "MAX_PHANTOM_PROCESSES", MAX_PHANTOM_PROCESSES);
             }
