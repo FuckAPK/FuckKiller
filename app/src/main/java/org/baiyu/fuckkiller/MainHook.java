@@ -16,37 +16,44 @@ public class MainHook implements IXposedHookLoadPackage {
         if (! lpparam.packageName.equals("android")) {
             return;
         }
+        try {
+            Class<?> activityManagerConstants = XposedHelpers.findClass("com.android.server.am.ActivityManagerConstants", lpparam.classLoader);
+            XposedHelpers.setStaticIntField(activityManagerConstants, "DEFAULT_MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES);
+            XposedHelpers.setStaticIntField(activityManagerConstants, "DEFAULT_MAX_PHANTOM_PROCESSES", MAX_PHANTOM_PROCESSES);
+            XposedBridge.hookAllConstructors(activityManagerConstants, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    super.afterHookedMethod(param);
+                    XposedHelpers.setIntField(param.thisObject, "mCustomizedMaxCachedProcesses", MAX_CACHED_PROCESSES);
+                    XposedHelpers.setIntField(param.thisObject, "MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES);
+                    XposedHelpers.setIntField(param.thisObject, "CUR_MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES);
+                    XposedHelpers.setIntField(param.thisObject, "CUR_MAX_EMPTY_PROCESSES", MAX_CACHED_PROCESSES / 2);
 
-        Class<?> activityManagerConstants = XposedHelpers.findClass("com.android.server.am.ActivityManagerConstants", lpparam.classLoader);
-        XposedHelpers.setStaticIntField(activityManagerConstants, "DEFAULT_MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES);
-        XposedHelpers.setStaticIntField(activityManagerConstants, "DEFAULT_MAX_PHANTOM_PROCESSES", MAX_PHANTOM_PROCESSES);
-        XposedBridge.hookAllConstructors(activityManagerConstants, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                super.afterHookedMethod(param);
-                XposedHelpers.setIntField(param.thisObject, "mCustomizedMaxCachedProcesses", MAX_CACHED_PROCESSES);
-                XposedHelpers.setIntField(param.thisObject, "MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES);
-                XposedHelpers.setIntField(param.thisObject, "CUR_MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES);
-                XposedHelpers.setIntField(param.thisObject, "CUR_MAX_EMPTY_PROCESSES", MAX_CACHED_PROCESSES/2);
+                    XposedHelpers.setIntField(param.thisObject, "MAX_PHANTOM_PROCESSES", MAX_PHANTOM_PROCESSES);
+                }
+            });
+        } catch (Exception e) {
+            XposedBridge.log("FuckKiller: ActivityManagerConstants Hook Failed: " + e);
+        }
 
-                XposedHelpers.setIntField(param.thisObject, "MAX_PHANTOM_PROCESSES", MAX_PHANTOM_PROCESSES);
-            }
-        });
-
-        Class<?> recentTasks = XposedHelpers.findClass("com.android.server.wm.RecentTasks", lpparam.classLoader);
-        XposedHelpers.findAndHookMethod(
-                recentTasks,
-                "isInVisibleRange",
-                XposedHelpers.findClass("com.android.server.wm.Task", lpparam.classLoader),
-                int.class,
-                int.class,
-                boolean.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-                        param.args[2] = 0;
-                    }
-                });
+        try {
+            Class<?> recentTasks = XposedHelpers.findClass("com.android.server.wm.RecentTasks", lpparam.classLoader);
+            XposedHelpers.findAndHookMethod(
+                    recentTasks,
+                    "isInVisibleRange",
+                    XposedHelpers.findClass("com.android.server.wm.Task", lpparam.classLoader),
+                    int.class,
+                    int.class,
+                    boolean.class,
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            super.beforeHookedMethod(param);
+                            param.args[2] = 0;
+                        }
+                    });
+        } catch (Exception e) {
+            XposedBridge.log("FuckKiller: RecentTasks Hook Failed: " + e);
+        }
     }
 }
