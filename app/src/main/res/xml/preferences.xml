@@ -14,4 +14,10 @@
         app:title="Max Phantom Processes"
         app:iconSpaceReserved="false"/>
 
+    <SwitchPreference
+        app:defaultValue="true"
+        app:key="RECENT_TASKS_HOOK"
+        app:title="Recent Tasks Hook"
+        app:iconSpaceReserved="false"/>
+
 </PreferenceScreen>
