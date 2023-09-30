@@ -2,18 +2,22 @@ package org.baiyu.fuckkiller;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
 
-    private final static int MAX_CACHED_PROCESSES = 1024;
-    private final static int MAX_PHANTOM_PROCESSES = 1024;
+    final XSharedPreferences prefs = new XSharedPreferences(BuildConfig.APPLICATION_ID);
+    final String PREF_MAX_CACHED_PROCESSES = "MAX_CACHED_PROCESSES";
+    final String PREF_MAX_PHANTOM_PROCESSES = "MAX_PHANTOM_PROCESSES";
+    final int MAX_CACHED_PROCESSES = Integer.parseInt(prefs.getString(PREF_MAX_CACHED_PROCESSES, "1024"));
+    final int MAX_PHANTOM_PROCESSES = Integer.parseInt(prefs.getString(PREF_MAX_PHANTOM_PROCESSES, "1024"));
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        if (! lpparam.packageName.equals("android")) {
+        if (!lpparam.packageName.equals("android")) {
             return;
         }
 
