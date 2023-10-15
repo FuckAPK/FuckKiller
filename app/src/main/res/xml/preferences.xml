@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <EditTextPreference
         app:defaultValue="1024"
+        app:iconSpaceReserved="false"
         app:key="MAX_CACHED_PROCESSES"
-        app:title="Max Cached Processes"
-        app:iconSpaceReserved="false"/>
+        app:title="Max Cached Processes" />
 
     <EditTextPreference
         app:defaultValue="1024"
+        app:iconSpaceReserved="false"
         app:key="MAX_PHANTOM_PROCESSES"
-        app:title="Max Phantom Processes"
-        app:iconSpaceReserved="false"/>
+        app:title="Max Phantom Processes" />
 
     <SwitchPreference
         app:defaultValue="true"
+        app:iconSpaceReserved="false"
         app:key="RECENT_TASKS_HOOK"
-        app:title="Recent Tasks Hook"
-        app:iconSpaceReserved="false"/>
+        app:title="Recent Tasks Hook" />
 
 </PreferenceScreen>

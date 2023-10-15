@@ -12,7 +12,9 @@ import androidx.preference.PreferenceFragmentCompat;
 import de.robv.android.xposed.XposedBridge;
 
 public class SettingsActivity extends AppCompatActivity {
-    /** @noinspection deprecation*/
+    /**
+     * @noinspection deprecation
+     */
     @SuppressLint("WorldReadableFiles")
     @Override
     protected void onCreate(Bundle savedInstanceState) {

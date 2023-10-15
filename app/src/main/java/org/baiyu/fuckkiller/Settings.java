@@ -4,11 +4,11 @@ import de.robv.android.xposed.XSharedPreferences;
 
 public class Settings {
 
-    private static XSharedPreferences prefs;
     private static final String PREF_MAX_CACHED_PROCESSES = "MAX_CACHED_PROCESSES";
     private static final String PREF_MAX_PHANTOM_PROCESSES = "MAX_PHANTOM_PROCESSES";
     private static final String PREF_RECENT_TASKS_HOOK = "RECENT_TASKS_HOOK";
     private static final int MIN_PROCESSES = 4;
+    private static XSharedPreferences prefs;
     private volatile static Settings INSTANCE;
 
     private Settings() {
