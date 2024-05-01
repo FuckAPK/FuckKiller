@@ -1,45 +1,36 @@
-package org.baiyu.fuckkiller;
+package org.baiyu.fuckkiller
 
-import de.robv.android.xposed.XSharedPreferences;
+import de.robv.android.xposed.XSharedPreferences
+import kotlin.concurrent.Volatile
 
-public class Settings {
+class Settings private constructor(private val prefs: XSharedPreferences) {
+    val maxCachedProcesses: Int
+        get() = prefs.getString(
+            PREF_MAX_CACHED_PROCESSES,
+            "1024"
+        )!!.toInt()
 
-    private static final String PREF_MAX_CACHED_PROCESSES = "MAX_CACHED_PROCESSES";
-    private static final String PREF_MAX_PHANTOM_PROCESSES = "MAX_PHANTOM_PROCESSES";
-    private static final String PREF_RECENT_TASKS_HOOK = "RECENT_TASKS_HOOK";
-    private static final int MIN_PROCESSES = 4;
-    private static XSharedPreferences prefs;
-    private volatile static Settings INSTANCE;
+    val maxPhantomProcesses: Int
+        get() = prefs.getString(
+            PREF_MAX_PHANTOM_PROCESSES,
+            "1024"
+        )!!.toInt()
 
-    private Settings() {
-        prefs = new XSharedPreferences(BuildConfig.APPLICATION_ID);
-    }
+    val isRecentTasksHookEnabled: Boolean
+        get() = prefs.getBoolean(PREF_RECENT_TASKS_HOOK, true)
 
-    public static Settings getInstance() {
-        if (INSTANCE == null) {
-            synchronized (Settings.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new Settings();
-                }
+    companion object {
+        private const val PREF_MAX_CACHED_PROCESSES = "MAX_CACHED_PROCESSES"
+        private const val PREF_MAX_PHANTOM_PROCESSES = "MAX_PHANTOM_PROCESSES"
+        private const val PREF_RECENT_TASKS_HOOK = "RECENT_TASKS_HOOK"
+
+        @Volatile
+        private var INSTANCE: Settings? = null
+
+        fun getInstance(prefs: XSharedPreferences): Settings {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Settings(prefs).also { INSTANCE = it }
             }
         }
-        return INSTANCE;
     }
-
-    public int getMinProcesses() {
-        return MIN_PROCESSES;
-    }
-
-    public int getMaxCachedProcesses() {
-        return Integer.parseInt(prefs.getString(PREF_MAX_CACHED_PROCESSES, "1024"));
-    }
-
-    public int getMaxPhantomProcesses() {
-        return Integer.parseInt(prefs.getString(PREF_MAX_PHANTOM_PROCESSES, "1024"));
-    }
-
-    public boolean isRecentTasksHookEnabled() {
-        return prefs.getBoolean(PREF_RECENT_TASKS_HOOK, true);
-    }
-
 }
