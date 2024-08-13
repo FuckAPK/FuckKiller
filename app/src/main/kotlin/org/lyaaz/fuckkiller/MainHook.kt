@@ -1,5 +1,6 @@
 package org.lyaaz.fuckkiller
 
+import android.os.Build
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XSharedPreferences
@@ -14,64 +15,93 @@ class MainHook : IXposedHookLoadPackage {
             return
         }
 
-        val activityManagerConstants = XposedHelpers.findClass(
-            "com.android.server.am.ActivityManagerConstants",
-            lpparam.classLoader
-        )
+        runCatching {
+            XposedHelpers.findClass(
+                "com.android.server.am.ActivityManagerConstants",
+                lpparam.classLoader
+            )
+        }.onFailure {
+            XposedBridge.log(it)
+        }.getOrNull()?.let {
+            hookActivityManagerConstant(it)
+        }
 
-        XposedHelpers.setStaticLongField(
-            activityManagerConstants,
-            "DEFAULT_MAX_EMPTY_TIME_MILLIS",
-            MAX_EMPTY_TIME_MILLIS
-        )
+        if (settings.isRecentTasksHookEnabled) {
+            runCatching {
+                XposedHelpers.findClass("com.android.server.wm.RecentTasks", lpparam.classLoader)
+            }.onFailure {
+                XposedBridge.log(it)
+            }.getOrNull()?.let {
+                hookRecentTask(it)
+            }
+        }
+    }
 
-        XposedHelpers.setStaticIntField(
-            activityManagerConstants,
-            "DEFAULT_MAX_CACHED_PROCESSES",
-            maxCachedProcesses
-        )
+    private fun hookActivityManagerConstant(activityManagerConstants: Class<*>) {
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.TIRAMISU) {
+            runCatching {
+                XposedHelpers.setStaticLongField(
+                    activityManagerConstants,
+                    "DEFAULT_MAX_EMPTY_TIME_MILLIS",
+                    MAX_EMPTY_TIME_MILLIS
+                )
+            }.onSuccess {
+                XposedBridge.log("set DEFAULT_MAX_EMPTY_TIME_MILLIS: $MAX_EMPTY_TIME_MILLIS")
+            }.onFailure {
+                XposedBridge.log(it)
+            }
+        }
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
+            runCatching {
+                XposedHelpers.setStaticIntField(
+                    activityManagerConstants, "DEFAULT_MAX_CACHED_PROCESSES", maxCachedProcesses
+                )
+            }.onSuccess {
+                XposedBridge.log("set DEFAULT_MAX_CACHED_PROCESSES: $maxCachedProcesses")
+            }.onFailure {
+                XposedBridge.log(it)
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching {
+                XposedHelpers.setStaticIntField(
+                    activityManagerConstants, "DEFAULT_MAX_PHANTOM_PROCESSES", maxPhantomProcesses
+                )
+            }.onSuccess {
+                XposedBridge.log("set DEFAULT_MAX_PHANTOM_PROCESSES: $maxPhantomProcesses")
+            }.onFailure {
+                XposedBridge.log(it)
+            }
+        }
+
         XposedBridge.hookAllConstructors(activityManagerConstants, object : XC_MethodHook() {
             override fun afterHookedMethod(param: MethodHookParam) {
-                param.thisObject.apply {
-                    XposedHelpers.setIntField(
-                        this,
-                        "mCustomizedMaxCachedProcesses",
-                        maxCachedProcesses
-                    )
-                    XposedHelpers.setIntField(this, "MAX_CACHED_PROCESSES", maxCachedProcesses)
-                    XposedHelpers.setIntField(this, "CUR_MAX_CACHED_PROCESSES", maxCachedProcesses)
-                    XposedHelpers.setIntField(
-                        this,
-                        "CUR_MAX_EMPTY_PROCESSES",
-                        maxCachedProcesses / 2
-                    )
-                    XposedHelpers.setLongField(this, "mMaxEmptyTimeMillis", MAX_EMPTY_TIME_MILLIS)
+                mapOf(
+                    "CUR_MAX_CACHED_PROCESSES" to maxCachedProcesses,
+                    "CUR_MAX_EMPTY_PROCESSES" to maxCachedProcesses / 2,
+                    "CUR_TRIM_EMPTY_PROCESSES" to maxCachedProcesses / 4,
+                    "CUR_TRIM_CACHED_PROCESSES" to maxCachedProcesses / 6
+                ).forEach { (name, value) ->
+                    runCatching {
+                        XposedHelpers.setIntField(param.thisObject, name, value)
+                    }.onSuccess {
+                        XposedBridge.log("Set $name = $value")
+                    }.onFailure {
+                        XposedBridge.log(it)
+                    }
                 }
             }
         })
+    }
 
-        XposedHelpers.setStaticIntField(
-            activityManagerConstants,
-            "DEFAULT_MAX_PHANTOM_PROCESSES",
-            maxPhantomProcesses
-        )
-        XposedBridge.hookAllConstructors(activityManagerConstants, object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam) {
-                XposedHelpers.setIntField(
-                    param.thisObject,
-                    "MAX_PHANTOM_PROCESSES",
-                    maxPhantomProcesses
-                )
-            }
-        })
-
-        if (settings.isRecentTasksHookEnabled) {
-            val recentTasks =
-                XposedHelpers.findClass("com.android.server.wm.RecentTasks", lpparam.classLoader)
+    private fun hookRecentTask(recentTasks: Class<*>) {
+        runCatching {
             XposedHelpers.findAndHookMethod(
                 recentTasks,
                 "isInVisibleRange",
-                XposedHelpers.findClass("com.android.server.wm.Task", lpparam.classLoader),
+                "com.android.server.wm.Task",
                 Int::class.javaPrimitiveType,
                 Int::class.javaPrimitiveType,
                 Boolean::class.javaPrimitiveType,
@@ -79,7 +109,8 @@ class MainHook : IXposedHookLoadPackage {
                     override fun beforeHookedMethod(param: MethodHookParam) {
                         param.args[2] = 0
                     }
-                })
+                }
+            )
         }
     }
 

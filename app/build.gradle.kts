@@ -21,7 +21,7 @@ android {
     compileSdk = 34
     defaultConfig {
         applicationId = "org.lyaaz.fuckkiller"
-        minSdk = 26
+        minSdk = 30
         targetSdk = 34
         versionCode = "git rev-list HEAD --count".execute().toInt()
         versionName = "git describe --tag".execute()
