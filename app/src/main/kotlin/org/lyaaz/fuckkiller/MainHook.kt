@@ -3,11 +3,9 @@ package org.lyaaz.fuckkiller
 import android.os.Build
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import kotlin.math.max
 
 class MainHook : IXposedHookLoadPackage {
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
@@ -26,14 +24,12 @@ class MainHook : IXposedHookLoadPackage {
             hookActivityManagerConstant(it)
         }
 
-        if (settings.isRecentTasksHookEnabled) {
-            runCatching {
-                XposedHelpers.findClass("com.android.server.wm.RecentTasks", lpparam.classLoader)
-            }.onFailure {
-                XposedBridge.log(it)
-            }.getOrNull()?.let {
-                hookRecentTask(it)
-            }
+        runCatching {
+            XposedHelpers.findClass("com.android.server.wm.RecentTasks", lpparam.classLoader)
+        }.onFailure {
+            XposedBridge.log(it)
+        }.getOrNull()?.let {
+            hookRecentTask(it)
         }
     }
 
@@ -67,7 +63,7 @@ class MainHook : IXposedHookLoadPackage {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
             runCatching {
                 XposedHelpers.setStaticIntField(
-                    activityManagerConstants, "DEFAULT_MAX_CACHED_PROCESSES", maxCachedProcesses
+                    activityManagerConstants, "DEFAULT_MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES
                 )
                 XposedBridge.hookAllConstructors(
                     activityManagerConstants,
@@ -75,14 +71,14 @@ class MainHook : IXposedHookLoadPackage {
                         override fun afterHookedMethod(param: MethodHookParam) {
                             runCatching {
                                 XposedHelpers.setIntField(
-                                    param.thisObject, "MAX_CACHED_PROCESSES", maxCachedProcesses
+                                    param.thisObject, "MAX_CACHED_PROCESSES", MAX_CACHED_PROCESSES
                                 )
                             }
                         }
                     }
                 )
             }.onSuccess {
-                XposedBridge.log("set DEFAULT_MAX_CACHED_PROCESSES: $maxCachedProcesses")
+                XposedBridge.log("set DEFAULT_MAX_CACHED_PROCESSES: $MAX_CACHED_PROCESSES")
             }.onFailure {
                 XposedBridge.log(it)
             }
@@ -91,7 +87,7 @@ class MainHook : IXposedHookLoadPackage {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             runCatching {
                 XposedHelpers.setStaticIntField(
-                    activityManagerConstants, "DEFAULT_MAX_PHANTOM_PROCESSES", maxPhantomProcesses
+                    activityManagerConstants, "DEFAULT_MAX_PHANTOM_PROCESSES", MAX_PHANTOM_PROCESSES
                 )
                 XposedBridge.hookAllConstructors(
                     activityManagerConstants,
@@ -99,14 +95,14 @@ class MainHook : IXposedHookLoadPackage {
                         override fun afterHookedMethod(param: MethodHookParam) {
                             runCatching {
                                 XposedHelpers.setIntField(
-                                    param.thisObject, "MAX_PHANTOM_PROCESSES", maxPhantomProcesses
+                                    param.thisObject, "MAX_PHANTOM_PROCESSES", MAX_PHANTOM_PROCESSES
                                 )
                             }
                         }
                     }
                 )
             }.onSuccess {
-                XposedBridge.log("set DEFAULT_MAX_PHANTOM_PROCESSES: $maxPhantomProcesses")
+                XposedBridge.log("set DEFAULT_MAX_PHANTOM_PROCESSES: $MAX_PHANTOM_PROCESSES")
             }.onFailure {
                 XposedBridge.log(it)
             }
@@ -115,10 +111,10 @@ class MainHook : IXposedHookLoadPackage {
         XposedBridge.hookAllConstructors(activityManagerConstants, object : XC_MethodHook() {
             override fun afterHookedMethod(param: MethodHookParam) {
                 mapOf(
-                    "CUR_MAX_CACHED_PROCESSES" to maxCachedProcesses,
-                    "CUR_MAX_EMPTY_PROCESSES" to maxCachedProcesses / 2,
-                    "CUR_TRIM_EMPTY_PROCESSES" to maxCachedProcesses / 4,
-                    "CUR_TRIM_CACHED_PROCESSES" to maxCachedProcesses / 6
+                    "CUR_MAX_CACHED_PROCESSES" to MAX_CACHED_PROCESSES,
+                    "CUR_MAX_EMPTY_PROCESSES" to MAX_CACHED_PROCESSES / 2,
+                    "CUR_TRIM_EMPTY_PROCESSES" to MAX_CACHED_PROCESSES / 4,
+                    "CUR_TRIM_CACHED_PROCESSES" to MAX_CACHED_PROCESSES / 6
                 ).forEach { (name, value) ->
                     runCatching {
                         XposedHelpers.setIntField(param.thisObject, name, value)
@@ -151,18 +147,8 @@ class MainHook : IXposedHookLoadPackage {
     }
 
     companion object {
-        private val prefs: XSharedPreferences by lazy {
-            XSharedPreferences(BuildConfig.APPLICATION_ID)
-        }
-        private val settings: Settings by lazy {
-            Settings.getInstance(prefs)
-        }
-        private val maxCachedProcesses: Int by lazy {
-            max(settings.maxCachedProcesses, 32)
-        }
-        private val maxPhantomProcesses: Int by lazy {
-            max(settings.maxPhantomProcesses, 32)
-        }
+        private const val MAX_CACHED_PROCESSES = 1024
+        private const val MAX_PHANTOM_PROCESSES = 1024
         private const val MAX_EMPTY_TIME_MILLIS = 1000L * 60L * 60L * 1000L
     }
 }
