@@ -45,6 +45,18 @@ class MainHook : IXposedHookLoadPackage {
                     "DEFAULT_MAX_EMPTY_TIME_MILLIS",
                     MAX_EMPTY_TIME_MILLIS
                 )
+                XposedBridge.hookAllConstructors(
+                    activityManagerConstants,
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            runCatching {
+                                XposedHelpers.setLongField(
+                                    param.thisObject, "mMaxEmptyTimeMillis", MAX_EMPTY_TIME_MILLIS
+                                )
+                            }
+                        }
+                    }
+                )
             }.onSuccess {
                 XposedBridge.log("set DEFAULT_MAX_EMPTY_TIME_MILLIS: $MAX_EMPTY_TIME_MILLIS")
             }.onFailure {
@@ -57,6 +69,18 @@ class MainHook : IXposedHookLoadPackage {
                 XposedHelpers.setStaticIntField(
                     activityManagerConstants, "DEFAULT_MAX_CACHED_PROCESSES", maxCachedProcesses
                 )
+                XposedBridge.hookAllConstructors(
+                    activityManagerConstants,
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            runCatching {
+                                XposedHelpers.setIntField(
+                                    param.thisObject, "MAX_CACHED_PROCESSES", maxCachedProcesses
+                                )
+                            }
+                        }
+                    }
+                )
             }.onSuccess {
                 XposedBridge.log("set DEFAULT_MAX_CACHED_PROCESSES: $maxCachedProcesses")
             }.onFailure {
@@ -68,6 +92,18 @@ class MainHook : IXposedHookLoadPackage {
             runCatching {
                 XposedHelpers.setStaticIntField(
                     activityManagerConstants, "DEFAULT_MAX_PHANTOM_PROCESSES", maxPhantomProcesses
+                )
+                XposedBridge.hookAllConstructors(
+                    activityManagerConstants,
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+                            runCatching {
+                                XposedHelpers.setIntField(
+                                    param.thisObject, "MAX_PHANTOM_PROCESSES", maxPhantomProcesses
+                                )
+                            }
+                        }
+                    }
                 )
             }.onSuccess {
                 XposedBridge.log("set DEFAULT_MAX_PHANTOM_PROCESSES: $maxPhantomProcesses")
