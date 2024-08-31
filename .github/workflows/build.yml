@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    uses: lyaaz/workflows/.github/workflows/build.yml@main
+    uses: FuckAPK/workflows/.github/workflows/build.yml@main
     permissions:
       contents: write
     secrets: inherit
