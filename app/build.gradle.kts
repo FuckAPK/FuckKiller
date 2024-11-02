@@ -18,7 +18,7 @@ fun String.execute(currentWorkingDir: File = file("./")): String {
 
 android {
     namespace = "org.lyaaz.fuckkiller"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         applicationId = "org.lyaaz.fuckkiller"
         minSdk = 30
